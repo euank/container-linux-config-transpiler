@@ -16,3 +16,7 @@ import:
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
 - package: github.com/stretchr/testify/assert
   version: v1.1.4
+- package: github.com/coreos/go-systemd
+  version: v16
+  subpackages:
+  - unit

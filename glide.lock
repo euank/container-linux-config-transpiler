@@ -1,5 +1,5 @@
-hash: 5c7a111caf375e2dc4e8c2cd6e415b872c5e2aa3b60c08bd7816cedbd16d7187
-updated: 2017-09-25T14:34:09.292382858-07:00
+hash: eff3ea47046188a5fa2801d6dfa1816ed5aa253d328f5f6790e91e0e2194ec39
+updated: 2018-03-13T18:06:18.341979688-07:00
 imports:
 - name: github.com/ajeddeloh/yaml
   version: 6b94386aeefd8c4b8470aee72bfca084c2f91da9
@@ -10,9 +10,8 @@ imports:
   subpackages:
   - semver
 - name: github.com/coreos/go-systemd
-  version: 7c9533367ef925dc1078d75e5b7141e10da2c4e8
+  version: 40e2722dffead74698ca12a750f64ef313ddce05
   subpackages:
-  - dbus
   - unit
 - name: github.com/coreos/ignition
   version: 01c039a5ce59acd39e5741713e59abfcb74d0782
