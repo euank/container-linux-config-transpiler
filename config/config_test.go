@@ -1444,6 +1444,85 @@ func TestConvert(t *testing.T) {
 				},
 			}},
 		},
+		{
+			in: in{cfg: types.Config{
+				Systemd: types.Systemd{
+					Units: []types.SystemdUnit{
+						{
+							Name:     "broken.service",
+							Contents: "]total and complete garbage[",
+						},
+					},
+				},
+			}},
+			out: out{
+				r: report.Report{
+					Entries: []report.Entry{
+						{
+							Kind:    report.EntryError,
+							Message: `systemd unit "broken.service" could not be parsed: unable to find end of section`,
+						},
+					},
+				},
+			},
+		},
+		{
+			in: in{cfg: types.Config{
+				Systemd: types.Systemd{
+					Units: []types.SystemdUnit{
+						{
+							Name:     "noenable.service",
+							Contents: "[Service]\nExecStart=/usr/bin/mkdir /gems",
+						},
+						{
+							Name:     "enable1.service",
+							Contents: "[Service]\nExecStart=/usr/bin/touch /gems/辰砂",
+							Enabled:  util.BoolToPtr(true),
+						},
+						{
+							Name:     "enable2.service",
+							Contents: "[Service]\nExecStart=/usr/bin/touch /gems/ダイヤモンド",
+							Enable:   true,
+						},
+					},
+				},
+			}},
+			out: out{
+				cfg: ignTypes.Config{
+					Ignition: ignTypes.Ignition{Version: "2.1.0"},
+					Systemd: ignTypes.Systemd{
+						Units: []ignTypes.Unit{
+							ignTypes.Unit{
+								Name:     "noenable.service",
+								Contents: "[Service]\nExecStart=/usr/bin/mkdir /gems",
+							},
+							ignTypes.Unit{
+								Name:     "enable1.service",
+								Contents: "[Service]\nExecStart=/usr/bin/touch /gems/辰砂",
+								Enabled:  util.BoolToPtr(true),
+							},
+							ignTypes.Unit{
+								Name:     "enable2.service",
+								Contents: "[Service]\nExecStart=/usr/bin/touch /gems/ダイヤモンド",
+								Enable:   true,
+							},
+						},
+					},
+				},
+				r: report.Report{
+					Entries: []report.Entry{
+						{
+							Kind:    report.EntryWarning,
+							Message: `systemd unit "enable1.service" has no [Install] section; 'enabled' will do nothing`,
+						},
+						{
+							Kind:    report.EntryWarning,
+							Message: `systemd unit "enable2.service" has no [Install] section; 'enabled' will do nothing`,
+						},
+					},
+				},
+			},
+		},
 
 		// networkd
 		{
