@@ -29,20 +29,17 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	type in struct {
-		data string
-	}
 	type out struct {
 		cfg types.Config
 		r   report.Report
 	}
 
 	tests := []struct {
-		in  in
+		in  string
 		out out
 	}{
 		{
-			in: in{data: ``},
+			in: ``,
 			out: out{
 				cfg: types.Config{},
 				r: report.Report{
@@ -54,12 +51,12 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
-			in: in{data: `
+			in: `
 networkd:
   units:
     - name: bad.blah
       contents: not valid
-`},
+`,
 			out: out{cfg: types.Config{
 				Networkd: types.Networkd{
 					Units: []types.NetworkdUnit{
@@ -71,12 +68,12 @@ networkd:
 
 		// Timeouts
 		{
-			in: in{data: `
+			in: `
 ignition:
   timeouts:
     http_response_headers: 30
     http_total: 31
-`},
+`,
 			out: out{cfg: types.Config{
 				Ignition: types.Ignition{
 					Timeouts: types.Timeouts{
@@ -89,7 +86,7 @@ ignition:
 
 		// Config
 		{
-			in: in{data: `
+			in: `
 ignition:
   config:
     append:
@@ -108,7 +105,7 @@ ignition:
         hash:
           function: sha512
           sum: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-`},
+`,
 			out: out{cfg: types.Config{
 				Ignition: types.Ignition{
 					Config: types.IgnitionConfig{
@@ -151,7 +148,7 @@ ignition:
 
 		// Storage
 		{
-			in: in{data: `
+			in: `
 storage:
   disks:
     - device: /dev/sda
@@ -315,7 +312,7 @@ storage:
       filesystem: filesystem2
       hard: true
       target: /opt/file3
-`},
+`,
 			out: out{cfg: types.Config{
 				Storage: types.Storage{
 					Disks: []types.Disk{
@@ -562,7 +559,7 @@ storage:
 
 		// systemd
 		{
-			in: in{data: `
+			in: `
 systemd:
   units:
     - name: test1.service
@@ -578,7 +575,7 @@ systemd:
       contents: test2 contents
     - name: test3.service
       enabled: false
-`},
+`,
 			out: out{cfg: types.Config{
 				Systemd: types.Systemd{
 					Units: []types.SystemdUnit{
@@ -613,13 +610,13 @@ systemd:
 
 		// networkd
 		{
-			in: in{data: `
+			in: `
 networkd:
   units:
     - name: empty.netdev
     - name: test.network
       contents: test config
-`},
+`,
 			out: out{cfg: types.Config{
 				Networkd: types.Networkd{
 					Units: []types.NetworkdUnit{
@@ -637,7 +634,7 @@ networkd:
 
 		// passwd
 		{
-			in: in{data: `
+			in: `
 passwd:
   users:
     - name: user 1
@@ -693,7 +690,7 @@ passwd:
       system: true
     - name: group 2
       password_hash: password 2
-`},
+`,
 			out: out{cfg: types.Config{
 				Passwd: types.Passwd{
 					Users: []types.User{
@@ -757,13 +754,13 @@ passwd:
 			}},
 		},
 		{
-			in: in{data: `
+			in: `
 etcd:
     version: "3.0.15"
     discovery: "https://discovery.etcd.io/<token>"
     listen_client_urls: "http://0.0.0.0:2379,http://0.0.0.0:4001"
     max_wals: 44
-`},
+`,
 			out: out{cfg: types.Config{
 				Etcd: &types.Etcd{
 					Version: func(t types.EtcdVersion) *types.EtcdVersion { return &t }(
@@ -781,11 +778,11 @@ etcd:
 			}},
 		},
 		{
-			in: in{data: `
+			in: `
 flannel:
     version: 0.6.2
     etcd_prefix: "/coreos.com/network2"
-`},
+`,
 			out: out{cfg: types.Config{
 				Flannel: &types.Flannel{
 					Version: func(t types.FlannelVersion) *types.FlannelVersion { return &t }(
@@ -803,7 +800,7 @@ flannel:
 	}
 
 	for i, test := range tests {
-		cfg, _, err := Parse([]byte(test.in.data))
+		cfg, _, err := Parse([]byte(test.in))
 		assert.Equal(t, test.out.r, err, "#%d: bad report", i)
 		assert.Equal(t, test.out.cfg, cfg, "#%d: bad config", i)
 	}
@@ -1630,25 +1627,22 @@ func TestConvert(t *testing.T) {
 }
 
 func TestParseAndConvert(t *testing.T) {
-	type in struct {
-		data string
-	}
 	type out struct {
 		cfg ignTypes.Config
 		r   report.Report
 	}
 
 	tests := []struct {
-		in  in
+		in  string
 		out out
 	}{
 		{
-			in: in{data: `
+			in: `
 networkd:
   units:
     - name: bad.blah
       contents: not valid
-`},
+`,
 			out: out{
 				cfg: ignTypes.Config{},
 				r: report.Report{Entries: []report.Entry{{
@@ -1660,12 +1654,12 @@ networkd:
 			},
 		},
 		{
-			in: in{data: `
+			in: `
 networkd:
   units:
     - name: bad.network
       contents: "[not valid"
-`},
+`,
 			out: out{
 				cfg: ignTypes.Config{},
 				r: report.Report{Entries: []report.Entry{{
@@ -1679,7 +1673,7 @@ networkd:
 
 		// valid
 		{
-			in: in{data: `
+			in: `
 ignition:
   config:
     append:
@@ -1695,7 +1689,7 @@ ignition:
         hash:
           function: sha512
           sum: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-`},
+`,
 			out: out{cfg: ignTypes.Config{
 				Ignition: ignTypes.Ignition{
 					Version: "2.1.0",
@@ -1736,7 +1730,7 @@ ignition:
 
 		// Invalid files
 		{
-			in: in{data: `
+			in: `
 storage:
   files:
     - path: opt/file1
@@ -1763,7 +1757,7 @@ storage:
         id: 502
       group:
         id: 503
-`},
+`,
 			out: out{
 				cfg: ignTypes.Config{},
 				r: report.Report{Entries: []report.Entry{
@@ -1785,7 +1779,7 @@ storage:
 
 		// Invalid disk dimensions
 		{
-			in: in{data: `
+			in: `
 storage:
   disks:
     - device: /dev/sda
@@ -1801,7 +1795,7 @@ storage:
           size: 1GB
           start: -300MB
           type_guid: 00000000-0000-0000-0000-000000000000
-`},
+`,
 			out: out{
 				cfg: ignTypes.Config{},
 				r: report.Report{Entries: []report.Entry{
@@ -1823,7 +1817,7 @@ storage:
 
 		// Valid files
 		{
-			in: in{data: `
+			in: `
 storage:
   files:
     - path: /opt/file1
@@ -1850,7 +1844,7 @@ storage:
         id: 502
       group:
         id: 503
-`},
+`,
 			out: out{cfg: ignTypes.Config{
 				Ignition: ignTypes.Ignition{Version: "2.1.0"},
 				Storage: ignTypes.Storage{
@@ -1901,7 +1895,7 @@ storage:
 	}
 
 	for i, test := range tests {
-		cfg, ast, r := Parse([]byte(test.in.data))
+		cfg, ast, r := Parse([]byte(test.in))
 		if len(r.Entries) != 0 {
 			t.Errorf("#%d: got error while parsing input: %v", i, r)
 		}
