@@ -15,9 +15,14 @@
 package types
 
 import (
+	"fmt"
+	"strings"
+
 	ignTypes "github.com/coreos/ignition/config/v2_1/types"
 	"github.com/coreos/ignition/config/validate/astnode"
 	"github.com/coreos/ignition/config/validate/report"
+
+	sdunit "github.com/coreos/go-systemd/unit"
 )
 
 type Systemd struct {
@@ -40,6 +45,7 @@ type SystemdUnitDropIn struct {
 
 func init() {
 	register(func(in Config, ast astnode.AstNode, out ignTypes.Config, platform string) (ignTypes.Config, report.Report, astnode.AstNode) {
+		var rep report.Report
 		for _, unit := range in.Systemd.Units {
 			newUnit := ignTypes.Unit{
 				Name:     unit.Name,
@@ -56,8 +62,43 @@ func init() {
 				})
 			}
 
+			unitRep := validateUnit(newUnit)
+			rep.Merge(unitRep)
 			out.Systemd.Units = append(out.Systemd.Units, newUnit)
 		}
-		return out, report.Report{}, ast
+		return out, rep, ast
 	})
+}
+
+func validateUnit(unit ignTypes.Unit) report.Report {
+	var rep report.Report
+
+	isEnabled := unit.Enable || (unit.Enabled != nil && *unit.Enabled)
+
+	if unit.Contents != "" {
+		parsedUnit, err := sdunit.Deserialize(strings.NewReader(unit.Contents))
+		if err != nil {
+			rep.Add(report.Entry{
+				Kind:    report.EntryError,
+				Message: fmt.Sprintf("systemd unit %q could not be parsed: %v", unit.Name, err),
+			})
+			return rep
+		}
+
+		noInstall := true
+		for _, section := range parsedUnit {
+			if section.Section == "Install" {
+				noInstall = false
+			}
+		}
+
+		if isEnabled && noInstall {
+			rep.Add(report.Entry{
+				Kind:    report.EntryWarning,
+				Message: fmt.Sprintf("systemd unit %q has no [Install] section; 'enabled' will do nothing", unit.Name),
+			})
+		}
+	}
+
+	return rep
 }
